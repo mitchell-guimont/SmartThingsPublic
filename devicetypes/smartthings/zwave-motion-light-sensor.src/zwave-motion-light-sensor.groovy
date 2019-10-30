@@ -23,10 +23,15 @@ metadata {
 		capability "Battery"
 		capability "Sensor"
 		capability "Health Check"
+		capability "Configuration"
+
 		//zw:S type:0701 mfr:021F prod:0003 model:0083 ver:3.92 zwv:4.05 lib:06 cc:5E,86,72,5A,73,80,31,71,30,70,85,59,84 role:06 ff:8C07 ui:8C07
 		fingerprint mfr: "021F", prod: "0003", model: "0083", deviceJoinName: "Dome Motion/Light Sensor"
 		//zw:S type:0701 mfr:0258 prod:0003 model:008D ver:3.80 zwv:4.38 lib:06 cc:5E,86,72,5A,73,80,31,71,30,70,85,59,84 role:06 ff:8C07 ui:8C07
-		fingerprint mfr: "0258", prod: "0003", model: "008D", deviceJoinName: "Coolcam Neo Motion/Light Sensor"
+		fingerprint mfr: "0258", prod: "0003", model: "008D", deviceJoinName: "NEO Coolcam Motion/Light Sensor"
+		//zw:S type:0701 mfr:0258 prod:0003 model:108D ver:3.80 zwv:4.38 lib:06 cc:5E,86,72,5A,73,80,31,71,30,70,85,59,84 role:06 ff:8C07 ui:8C07 EU version
+		fingerprint mfr: "0258", prod: "0003", model: "108D", deviceJoinName: "NEO Coolcam Motion/Light Sensor"
+		fingerprint mfr: "0060", prod: "0012", model: "0001", deviceJoinName: "Everspring Outdoor Floodlight", mmnm: "SmartThings", vid: "generic-motion-light-sensor"
 	}
 
 	simulator {
@@ -69,7 +74,13 @@ metadata {
 
 
 def installed() {
-	configure()
+	response([zwave.batteryV1.batteryGet().format(),
+			"delay 500",
+			zwave.sensorBinaryV2.sensorBinaryGet(sensorType: 0x0C).format(), // motion
+			"delay 500",
+			zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 0x03, scale: 1).format(), // illuminance
+			"delay 10000",
+			zwave.wakeUpV2.wakeUpNoMoreInformation().format()])
 }
 
 def updated() {
@@ -79,17 +90,23 @@ def updated() {
 def configure() {
 	// Device wakes up every deviceCheckInterval hours, this interval allows us to miss one wakeup notification before marking offline
 	sendEvent(name: "checkInterval", value: 2 * deviceWakeUpInterval * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
-	response(zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 3, scale: 1).format())
+
+	if (isEverspringFloodlight()) {
+		response(zwave.configurationV1.configurationSet(parameterNumber: 3, size: 2, scaledConfigurationValue: 600)) //enables illuminance report every 10 minutes
+	}
 }
 
 def getDeviceWakeUpInterval() {
 	def deviceWakeIntervalValue = 4
 	switch (zwaveInfo?.mfr) {
-		case "021F": deviceWakeIntervalValue = 12  //Dome reports once in 12h
+		case "021F":
+			deviceWakeIntervalValue = 12 // Dome reports once in 12h
 			break
-		case "0258": deviceWakeIntervalValue = 12  //Coolcam Neo reports once in 12h
+		case "0258":
+			deviceWakeIntervalValue = 12 // NEO Coolcam reports once in 12h
 			break
-		default: deviceWakeIntervalValue = 4 //Default Z-Wave battery device reports once in 4h
+		default:
+			deviceWakeIntervalValue = 4 // Default Z-Wave battery device reports once in 4h
 	}
 	return deviceWakeIntervalValue
 }
@@ -102,14 +119,14 @@ private getCommandClassVersions() {
 			0x72: 2,  // ManufacturerSpecific
 			0x31: 5,  // SensorMultilevel
 			0x84: 2,  // WakeUp
-			0x30: 2   //Sensor Binary
+			0x30: 2   // Sensor Binary
 	]
 }
 
 def parse(String description) {
 	def results = []
 	if (description.startsWith("Err")) {
-		results << createEvent(descriptionText: description, displayed: true)
+		results += createEvent(descriptionText: description, displayed: true)
 	} else {
 		def cmd = zwave.parse(description, commandClassVersions)
 		if (cmd) {
@@ -130,11 +147,11 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 
 def zwaveEvent(physicalgraph.zwave.commands.notificationv3.NotificationReport cmd) {
 	def results = []
-	if (cmd.notificationType == 0x07) {          //Burglar
-		if (cmd.event == 0x08) {                 //detected
-			results << sensorMotionEvent(1)
-		} else if (cmd.event == 0x00) {          //inactive
-			results << sensorMotionEvent(0)
+	if (cmd.notificationType == 0x07) {          // Burglar
+		if (cmd.event == 0x08) {                 // detected
+			results += sensorMotionEvent(1)
+		} else if (cmd.event == 0x00) {          // inactive
+			results += sensorMotionEvent(0)
 		}
 	}
 	return results
@@ -150,7 +167,7 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 	} else {
 		map.value = cmd.batteryLevel
 	}
-	results << createEvent(map)
+	results += createEvent(map)
 	return results
 }
 
@@ -167,30 +184,40 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
 		default:
 			map.descriptionText = cmd.toString()
 	}
-	results << createEvent(map)
+	results += createEvent(map)
 	return results
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	def results = []
-	results << createEvent(descriptionText: "$device.displayName woke up", isStateChange: false)
-	results << response(zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 3, scale: 1).format())
+	results += createEvent(descriptionText: "$device.displayName woke up", isStateChange: false)
+	results += response(zwave.sensorMultilevelV5.sensorMultilevelGet(sensorType: 3, scale: 1).format())
 	if (!state.lastbatt || (now() - state.lastbatt) >= 10 * 60 * 60 * 1000) {
-		results << response(["delay 1000",
+		results += response(["delay 1000",
 							 zwave.batteryV1.batteryGet().format(),
 							 "delay 2000"
 		])
 	}
-	results << response(zwave.wakeUpV2.wakeUpNoMoreInformation().format())
+	results += response(zwave.wakeUpV2.wakeUpNoMoreInformation().format())
 	return results
+}
+
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+	// Handles all Z-Wave commands we aren't interested in
+	log.debug "Unhandled: ${cmd.toString()}"
+	[:]
 }
 
 def sensorMotionEvent(value) {
 	def result = []
 	if (value) {
-		result << createEvent(name: "motion", value: "active", descriptionText: "$device.displayName detected motion")
+		result += createEvent(name: "motion", value: "active", descriptionText: "$device.displayName detected motion")
 	} else {
-		result << createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName motion has stopped")
+		result += createEvent(name: "motion", value: "inactive", descriptionText: "$device.displayName motion has stopped")
 	}
 	return result
+}
+
+private isEverspringFloodlight() {
+	zwaveInfo.mfr == "0060" && zwaveInfo.model == "0001"
 }

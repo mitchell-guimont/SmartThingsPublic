@@ -12,7 +12,7 @@
  *
  */
 metadata {
-	definition(name: "Z-Wave Water Valve", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.watervalve") {
+	definition(name: "Z-Wave Water Valve", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.watervalve", runLocally: true, executeCommandsLocally: true, minHubCoreVersion: "000.022.0004") {
 		capability "Actuator"
 		capability "Health Check"
 		capability "Valve"
@@ -23,6 +23,8 @@ metadata {
 		fingerprint deviceId: "0x1006", inClusters: "0x25"
 		fingerprint mfr: "0173", prod: "0003", model: "0002", deviceJoinName: "Leak Intelligence Leak Gopher Water Shutoff Valve"
 		fingerprint mfr: "021F", prod: "0003", model: "0002", deviceJoinName: "Dome Water Main Shut-off"
+		fingerprint mfr: "0157", prod: "0003", model: "0002", deviceJoinName: "EcoNet Bulldog Valve Robot"
+		fingerprint mfr: "0152", prod: "0003", model: "0512", deviceJoinName: "POPP Secure Flow Stop"
 	}
 
 	// simulator metadata

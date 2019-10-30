@@ -12,16 +12,19 @@
  *
  */
 metadata {
-	definition(name: "Z-Wave Switch Secure", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.switch", runLocally: true, minHubCoreVersion: '000.019.00012', executeCommandsLocally: false) {
+	definition(name: "Z-Wave Switch Secure", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.switch", runLocally: true, minHubCoreVersion: '000.019.00012', executeCommandsLocally: false, genericHandler: "Z-Wave") {
 		capability "Switch"
 		capability "Refresh"
 		capability "Polling"
 		capability "Actuator"
 		capability "Sensor"
+		capability "Health Check"
 
 		fingerprint inClusters: "0x25,0x98"
 		fingerprint deviceId: "0x10", inClusters: "0x98"
 		fingerprint mfr: "0086", prod: "0003", model: "008B", deviceJoinName: "Aeon Labs Nano Switch"
+		fingerprint mfr: "0086", prod: "0103", model: "008B", deviceJoinName: "Aeon Labs Nano Switch"
+		fingerprint mfr: "027A", prod: "A000", model: "A001", deviceJoinName: "Zooz ZEN26 Switch"
 	}
 
 	simulator {
@@ -46,6 +49,11 @@ metadata {
 	}
 }
 
+def installed() {
+	// Device-Watch simply pings if no device events received for checkInterval duration of 32min = 2 * 15min + 2min lag time
+	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID, offlinePingable: "1"])
+}
+
 def updated() {
 	response(refresh())
 }
@@ -53,7 +61,6 @@ def updated() {
 def parse(description) {
 	def result = null
 	if (description.startsWith("Err 106")) {
-		state.sec = 0
 		result = createEvent(descriptionText: description, isStateChange: true)
 	} else if (description != "updated") {
 		def cmd = zwave.parse(description, [0x20: 1, 0x25: 1, 0x70: 1, 0x98: 1])
@@ -86,7 +93,6 @@ def zwaveEvent(physicalgraph.zwave.commands.hailv1.Hail cmd) {
 def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
 	def encapsulatedCommand = cmd.encapsulatedCommand([0x20: 1, 0x25: 1])
 	if (encapsulatedCommand) {
-		state.sec = 1
 		zwaveEvent(encapsulatedCommand)
 	}
 }
@@ -110,6 +116,10 @@ def off() {
 	])
 }
 
+def ping() {
+	refresh()
+}
+
 def poll() {
 	refresh()
 }
@@ -119,7 +129,7 @@ def refresh() {
 }
 
 private command(physicalgraph.zwave.Command cmd) {
-	if (state.sec != 0) {
+	if ((zwaveInfo.zw == null && state.sec != 0) || zwaveInfo?.zw?.contains("s")) {
 		zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
 	} else {
 		cmd.format()

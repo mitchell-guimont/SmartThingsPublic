@@ -11,12 +11,9 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-import groovy.transform.Field
-
-@Field Boolean hasConfiguredHealthCheck = false
 
 metadata {
-	definition(name: "ZLL White Color Temperature Bulb", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.light", runLocally: true, minHubCoreVersion: '000.021.00001', executeCommandsLocally: true) {
+	definition(name: "ZLL White Color Temperature Bulb", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "oic.d.light", runLocally: true, minHubCoreVersion: '000.021.00001', executeCommandsLocally: true, genericHandler: "ZLL") {
 
 		capability "Actuator"
 		capability "Color Temperature"
@@ -29,14 +26,25 @@ metadata {
 
 		attribute "colorName", "string"
 
-		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, 0B04, FC0F", outClusters: "0019", "manufacturer": "OSRAM", "model": "Classic A60 TW", deviceJoinName: "OSRAM LIGHTIFY LED Classic A60 Tunable White"
-		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, FC0F", outClusters: "0019", "manufacturer": "OSRAM", "model": "PAR16 50 TW", deviceJoinName: "OSRAM LIGHTIFY LED PAR16 50 Tunable White"
-		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, 0B04, FC0F", outClusters: "0019", manufacturer: "OSRAM", model: "Classic B40 TW - LIGHTIFY", deviceJoinName: "OSRAM LIGHTIFY Classic B40 Tunable White"
-		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, FC0F", outClusters: "0019", manufacturer: "OSRAM", model: "CLA60 TW OSRAM", deviceJoinName: "OSRAM LIGHTIFY LED Classic A60 Tunable White"
-		fingerprint inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "TRADFRI bulb E26 WS clear 950lm", deviceJoinName: "IKEA TRÅDFRI White Spectrum LED Bulb"
-		fingerprint inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "TRADFRI bulb GU10 WS 400lm", deviceJoinName: "IKEA TRÅDFRI White Spectrum LED Bulb"
-		fingerprint inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "TRADFRI bulb E12 WS opal 400lm", deviceJoinName: "IKEA TRÅDFRI White Spectrum LED Bulb"
-		fingerprint inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "TRADFRI bulb E26 WS opal 980lm", deviceJoinName: "IKEA TRÅDFRI White Spectrum LED Bulb"
+		// Generic
+		fingerprint profileId: "C05E", deviceId: "0220", inClusters: "0006, 0008, 0300", deviceJoinName: "Generic Color Temperature Light"
+
+		// AduraSmart
+		fingerprint profileId: "C05E", deviceId: "0220", manufacturer: "AduroSmart Eria", model: "ZLL-ColorTemperature", deviceJoinName: "Eria Color temperature light"
+		fingerprint profileId: "C05E", deviceId: "0220", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, FFFF, 0019", outClusters: "0019", manufacturer: "AduroSmart Eria", model: "ZLL-ColorTemperature", deviceJoinName: "Eria ZLL Color Temperature Bulb", mnmn:"SmartThings", vid: "generic-color-temperature-bulb-2200K-6500K"
+
+		// IKEA
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "FLOALT panel WS 30x30", deviceJoinName: "IKEA FLOALT Panel", mnmn:"SmartThings", vid: "generic-color-temperature-bulb-2200K-4000K"
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "SURTE door WS 38x64", deviceJoinName: "IKEA SURTE Panel", mnmn:"SmartThings", vid: "generic-color-temperature-bulb-2200K-4000K"
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 0B05, 1000", outClusters: "0005, 0019, 0020, 1000", manufacturer: "IKEA of Sweden", model: "JORMLIEN door WS 40x80", deviceJoinName: "IKEA JORMLIEN Panel", mnmn:"SmartThings", vid: "generic-color-temperature-bulb-2200K-4000K"
+
+		// OSRAM
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, 0B04, FC0F", outClusters: "0019", "manufacturer": "OSRAM", "model": "Classic A60 TW", deviceJoinName: "OSRAM SMART+ LED Classic A60 Tunable White"
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, FC0F", outClusters: "0019", "manufacturer": "OSRAM", "model": "PAR16 50 TW", deviceJoinName: "OSRAM SMART+ LED PAR16 50 Tunable White"
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, 0B04, FC0F", outClusters: "0019", manufacturer: "OSRAM", model: "Classic B40 TW - LIGHTIFY", deviceJoinName: "OSRAM SMART+ Classic B40 Tunable White"
+		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000, FC0F", outClusters: "0019", manufacturer: "OSRAM", model: "CLA60 TW OSRAM", deviceJoinName: "OSRAM SMART+ LED Classic A60 Tunable White"
+
+		// Philips Hue
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW001", deviceJoinName: "Philips Hue White Ambiance A19"
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW004", deviceJoinName: "Philips Hue White Ambiance A19"
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW010", deviceJoinName: "Philips Hue White Ambiance A19"
@@ -45,6 +53,9 @@ metadata {
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW013", deviceJoinName: "Philips Hue White Ambiance Spot"
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW014", deviceJoinName: "Philips Hue White Ambiance Spot"
 		fingerprint profileId: "C05E", inClusters: "0000, 0003, 0004, 0005, 0006, 0008, 0300, 1000", outClusters: "0019", manufacturer: "Philips", model: "LTW015", deviceJoinName: "Philips Hue White Ambiance A19"
+
+		// XLSmart
+		fingerprint profileId: "C05E", manufacturer: "Ubec", model: "BBB65L-HY", deviceJoinName: "XLSmart E27 Light Bulb"
 	}
 
 	// UI tile definitions
@@ -110,7 +121,7 @@ def on() {
 	zigbee.on() + ["delay 1500"] + zigbee.onOffRefresh()
 }
 
-def setLevel(value) {
+def setLevel(value, rate = null) {
 	zigbee.setLevel(value) + zigbee.onOffRefresh() + zigbee.levelRefresh()
 }
 
@@ -135,19 +146,19 @@ def ping() {
 
 def healthPoll() {
 	log.debug "healthPoll()"
-	def cmds = zigbee.onOffRefresh() + zigbee.levelRefresh()
+	def cmds = poll()
 	cmds.each { sendHubCommand(new physicalgraph.device.HubAction(it)) }
 }
 
 def configureHealthCheck() {
 	Integer hcIntervalMinutes = 12
-	if (!hasConfiguredHealthCheck) {
+	if (!state.hasConfiguredHealthCheck) {
 		log.debug "Configuring Health Check, Reporting"
-		unschedule("healthPoll")
-		runEvery5Minutes("healthPoll")
+		unschedule("healthPoll", [forceForLocallyExecuting: true])
+		runEvery5Minutes("healthPoll", [forceForLocallyExecuting: true])
 		// Device-Watch allows 2 check-in misses from device
 		sendEvent(name: "checkInterval", value: hcIntervalMinutes * 60, displayed: false, data: [protocol: "zigbee", hubHardwareId: device.hub.hardwareID])
-		hasConfiguredHealthCheck = true
+		state.hasConfiguredHealthCheck = true
 	}
 }
 
